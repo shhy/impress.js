@@ -9,7 +9,7 @@
  * Copyright 2011 Bartek Szopka (@bartaz)
  */
 
-var impress = (function ( document, window ) {
+(function ( document, window ) {
     'use strict';
 
     // HELPER FUNCTIONS
@@ -102,7 +102,7 @@ var impress = (function ( document, window ) {
     
     var roots = {};
     
-    return function ( rootId ) {
+    var impress = window.impress = function ( rootId ) {
 
         rootId = rootId || "impress";
         
@@ -299,53 +299,6 @@ var impress = (function ( document, window ) {
             return select(next);
         };
         
-        // EVENTS
-        
-        document.addEventListener("keydown", function ( event ) {
-            if ( event.keyCode == 9 || ( event.keyCode >= 32 && event.keyCode <= 34 ) || (event.keyCode >= 37 && event.keyCode <= 40) ) {
-                switch( event.keyCode ) {
-                    case 33: ; // pg up
-                    case 37: ; // left
-                    case 38:   // up
-                             selectPrev();
-                             break;
-                    case 9:  ; // tab
-                    case 32: ; // space
-                    case 34: ; // pg down
-                    case 39: ; // right
-                    case 40:   // down
-                             selectNext();
-                             break;
-                }
-                
-                event.preventDefault();
-            }
-        }, false);
-
-        document.addEventListener("click", function ( event ) {
-            // event delegation with "bubbling"
-            // check if event target (or any of its parents is a link or a step)
-            var target = event.target;
-            while ( (target.tagName != "A") &&
-                    (!isStep(target)) &&
-                    (target != document.body) ) {
-                target = target.parentNode;
-            }
-            
-            if ( target.tagName == "A" ) {
-                var href = target.getAttribute("href");
-                
-                // if it's a link to presentation step, target this step
-                if ( href && href[0] == '#' ) {
-                    target = byId( href.slice(1) );
-                }
-            }
-            
-            if ( select(target) ) {
-                event.preventDefault();
-            }
-        }, false);
-        
         window.addEventListener("hashchange", function () {
             select( getElementFromUrl() );
         }, false);
@@ -355,6 +308,7 @@ var impress = (function ( document, window ) {
         select(getElementFromUrl() || steps[0]);
         
         return roots[ "impress-root-" + rootId ] = {
+            isStep: isStep,
             select: select,
             selectNext: selectNext,
             selectPrev: selectPrev
@@ -362,4 +316,52 @@ var impress = (function ( document, window ) {
 
     }
     
+    // EVENTS
+    
+    document.addEventListener("keydown", function ( event ) {
+        if ( event.keyCode == 9 || ( event.keyCode >= 32 && event.keyCode <= 34 ) || (event.keyCode >= 37 && event.keyCode <= 40) ) {
+            switch( event.keyCode ) {
+                case 33: ; // pg up
+                case 37: ; // left
+                case 38:   // up
+                         impress().selectPrev();
+                         break;
+                case 9:  ; // tab
+                case 32: ; // space
+                case 34: ; // pg down
+                case 39: ; // right
+                case 40:   // down
+                         impress().selectNext();
+                         break;
+            }
+            
+            event.preventDefault();
+        }
+    }, false);
+
+    document.addEventListener("click", function ( event ) {
+        // event delegation with "bubbling"
+        // check if event target (or any of its parents is a link or a step)
+        var target = event.target;
+        while ( (target.tagName != "A") &&
+                (!impress().isStep(target)) &&
+                (target != document.body) ) {
+            target = target.parentNode;
+        }
+        
+        if ( target.tagName == "A" ) {
+            var href = target.getAttribute("href");
+            
+            // if it's a link to presentation step, target this step
+            if ( href && href[0] == '#' ) {
+                target = byId( href.slice(1) );
+            }
+        }
+        
+        if ( impress().select(target) ) {
+            event.preventDefault();
+        }
+    }, false);
+    
 })(document, window);
+
